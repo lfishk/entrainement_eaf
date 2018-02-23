@@ -44,6 +44,7 @@
 					<div class="alert alert-secondary" role="alert" id="log_frame"><pre id="log"></pre></div>
 					<div id="next" style="display:none">
 						Si aucun lecteur audio ne s'affiche, vérifiez votre micro et <a href="index.html">réessayez</a>. Faites des tests avec différents navigateurs.<br />
+						<br />
 						Si votre enregitrement se lit correctement, le test est positif. Vous pouvez <a href="epreuve.html">débuter l'épreuve</a>.
 					</div>
 				</div>
@@ -57,29 +58,9 @@
 	
 	<script>
 	
-	
 	function __log(e, data) {
 		log.innerHTML += "\n" + e + " " + (data || '');
 	}
-
-	var audio_context;
-	var recorder;
-
-	function startUserMedia(stream) {
-		var input = audio_context.createMediaStreamSource(stream);
-		__log('Media stream created.' );
-		//__log("input sample rate " +input.context.sampleRate);
-
-		// Feedback!
-		//input.connect(audio_context.destination);
-		__log('Input connected to audio context destination.');
-
-		recorder = new Recorder(input, {
-			numChannels: 1
-		});
-		__log('Recorder initialised.');
-	}	
-	
 	
 	if (!Recorder.isRecordingSupported()) {
 	
@@ -100,18 +81,19 @@
 		stopButton.addEventListener( "click", function(){ recorder.stop(); });
 		start.addEventListener( "click", function(){ 
 			recorder.start().catch(function(e){
-				__log('<span style="color:red;font-weight:bold">Error encountered: ' + e.message + '</span>');
+				__log('Error encountered: ' + e.message );
 			});
 		});
 
 		recorder.onstart = function(e){
-			__log('Recorder is started');
+			//__log('Recorder is started');
 			start.disabled = resume.disabled = true;
 			pause.disabled = stopButton.disabled = false;
 			$('#start_label').css('display', 'none');
 			$('#start').css('display', 'none');
 			$('#stop_label').css('display', 'block');
 			$('#stopButton').css('display', 'inline');
+			$('#log_frame').css('display', 'none');
 		};
 
 		recorder.onstop = function(e){
@@ -134,7 +116,7 @@
 			start.disabled = resume.disabled = true;
 			pause.disabled = stopButton.disabled = false;
 		};
-			
+		
 		recorder.ondataavailable = function( typedArray ){
 			var dataBlob = new Blob( [typedArray], { type: 'audio/ogg' } );
 			var fileName = "enregistrement.opus";
@@ -155,12 +137,28 @@
 
 			recordingslist.appendChild(li);
 		};
+
 	}
-	
+
+	var audio_context = new AudioContext;
+	var recorder;
+
+	function startUserMedia(stream) {
+		//var input = audio_context.createMediaStreamSource(stream);
+		__log('<span style="color:green;font-weight:bold">Media stream created.</span>');
+
+		// Uncomment if you want the audio to feedback directly
+		//input.connect(audio_context.destination);
+		//__log('<span style="color:green;font-weight:bold">Input connected to audio context destination.</span>');
+
+		//recorder = new Recorder(input);
+		__log('<span style="color:green;font-weight:bold">Recorder initialised.</span>');
+	}
 	
 	window.onload = function init() {
 		try {
 			// webkit shim
+			
 			window.AudioContext = window.AudioContext || window.webkitAudioContext;
 			navigator.getUserMedia = ( navigator.getUserMedia ||
 						   navigator.webkitGetUserMedia ||
@@ -171,6 +169,7 @@
 			audio_context = new AudioContext;
 			__log('Audio context set up.');
 			__log('Navigator User Media ' + (navigator.getUserMedia ? '<span style="color:green;font-weight:bold">available.</span>' : '<span style="color:red;font-weight:bold">not present!</span>'));
+		
 		} catch (e) {
 			alert('<span style="color:red;font-weight:bold">No web audio support in this browser!</span>');
 		}
@@ -179,7 +178,7 @@
 			//__log('No live audio input: ' + e);
 			__log('<span style="color:red;font-weight:bold">No live audio input.</span>');
 		});
-	};	
+	};
 	
 	</script>
 
