@@ -1,5 +1,3 @@
 ul {
 	list-style: none;
 }
-
-#wait {display:none;position:fixed;top:0px;left:0px;z-index:999;background-color:white;width:100%;height:100%;opacity:0.9;background-image:url('loading.gif');background-repeat:no-repeat;background-position:50% 30%;}

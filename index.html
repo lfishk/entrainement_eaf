@@ -11,52 +11,53 @@
 	<!-- Material Icons -->
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	
+	<!-- Customs CSS -->
 	<link rel="stylesheet" type="text/css" href="styles.css">
+	
+	<!-- Recoder -->
+	<script src="recorder.min.js"></script>
 
     <title>Entrainement EAF</title>
 
     </head>
 <body>
 
-<div id="wait" class="text-center"><br /><br /><br /><br /><b>ATTENDEZ!</b><br />La génération du fichier audio peut prendre plusieurs minutes.<br /><b>NE PAS QUITTER CETTE PAGE</b><br /><b>NE PAS RAFRAICHIR CETTE PAGE</b></div>
-
-<div class="container">
-	<div class="row">
-		<div class="col-md-8 offset-md-2">
-		
-			<h1 class="text-center">ENTRAINEMENT EAF</h1>
-			<h3 class="text-center">Test audio</h1>
-						
-
+	<div class="container">
+		<div class="row">
+			<div class="col-md-8 offset-md-2">
 			
-			
-			<div id="enregistrement" class="text-center">
-				<div id="start_label" style="width:70%;margin:30px auto 10px auto">
-					Cliquez sur le bouton ci-dessous pour faire un test d'enregistrement de quelques secondes.
-				</div>
-				<button type="button" class="btn btn-success btn-lg" onclick="startRecording(this);" id="start"><i class="material-icons">keyboard_voice</i></button>
-				<div id="stop_label" style="display:none;width:70%;margin:30px auto 10px auto">
-					Cliquez sur le bouton ci-dessous pour arrêter l'enregistrement.<br /><b>L'arrêt est définitif!</b>
-				</div>
-				<button type="button" class="btn btn-secondary btn-lg" onclick="stopRecording(this);" id="stop" style="display:none"><i class="material-icons">stop</i></button>
+				<h1 class="text-center">ENTRAINEMENT EAF</h1>
+				<h3 class="text-center">Test audio</h1>
 
-				<ul id="recordingslist" style="width:380px;margin:40px auto 0px auto"></ul>
-				<br />
-				<div class="alert alert-secondary" role="alert" id="log_frame"><pre id="log"></pre></div>
-				<div id="next" style="display:none">
-					Si aucun lecteur audio ne s'affiche, vérifiez votre micro et <a href="index.html">réessayez</a>. Faites des tests avec différents navigateurs.<br />
-					Si le test est positif, vous pouvez <a href="epreuve.html">débuter l'épreuve</a>.
+				<div id="enregistrement" class="text-center">
+					<div id="start_label" style="width:70%;margin:30px auto 10px auto">
+						Cliquez sur le bouton ci-dessous pour faire un test d'enregistrement de quelques secondes.
+					</div>
+					<button type="button" class="btn btn-success btn-lg" id="start"><i class="material-icons">keyboard_voice</i></button>
+					<div id="stop_label" style="display:none;width:70%;margin:30px auto 10px auto">
+						Cliquez sur le bouton ci-dessous pour arrêter l'enregistrement.<br /><b>L'arrêt est définitif!</b>
+					</div>
+					<button type="button" class="btn btn-secondary btn-lg" id="stopButton" style="display:none"><i class="material-icons">stop</i></button>
+
+					<ul id="recordingslist" style="width:380px;margin:40px auto 0px auto"></ul>
+					<br />
+					<div class="alert alert-secondary" role="alert" id="log_frame"><pre id="log"></pre></div>
+					<div id="next" style="display:none">
+						Si aucun lecteur audio ne s'affiche, vérifiez votre micro et <a href="index.html">réessayez</a>. Faites des tests avec différents navigateurs.<br />
+						Si votre enregitrement se lit correctement, le test est positif. Vous pouvez <a href="epreuve.html">débuter l'épreuve</a>.
+					</div>
 				</div>
+				
 			</div>
-			
 		</div>
 	</div>
-</div>
 	
-	
+	<button id="pause" style="display:none">pause</button>
+	<button id="resume" style="display:none">resume</button>	
 	
 	<script>
-
+	
+	
 	function __log(e, data) {
 		log.innerHTML += "\n" + e + " " + (data || '');
 	}
@@ -67,7 +68,7 @@
 	function startUserMedia(stream) {
 		var input = audio_context.createMediaStreamSource(stream);
 		__log('Media stream created.' );
-		__log("input sample rate " +input.context.sampleRate);
+		//__log("input sample rate " +input.context.sampleRate);
 
 		// Feedback!
 		//input.connect(audio_context.destination);
@@ -77,79 +78,86 @@
 			numChannels: 1
 		});
 		__log('Recorder initialised.');
-	}
-
-	function startRecording(button) {
-		recorder && recorder.record();
-		button.disabled = true;
-		button.nextElementSibling.disabled = false;
-		$('#start_label').css('display', 'none');
-		$('#start').css('display', 'none');
-		$('#stop_label').css('display', 'block');
-		$('#stop').css('display', 'inline');
-		$('#log_frame').css('display', 'none');
-		__log('Recording...');
-	}
-
-	function stopRecording(button) {
-		recorder && recorder.stop();
-		button.disabled = true;
-		button.previousElementSibling.disabled = false;
-		$('#stop_label').css('display', 'none');
-		$('#stop').css('display', 'none');
-		$('#next').css('display', 'block');
-		__log('Stopped recording.');
-
-		// create WAV download link using audio data blob
-		createDownloadLink();
-
-		recorder.clear();
-	}
-
-	function uploadAudio(mp3Data){
-		/*
-		var reader = new FileReader();
-		reader.onload = function(event){
-			var fd = new FormData();
-			var mp3Name = encodeURIComponent(date_deb + '_' + date_rec + '_' + date_stop + '.mp3');
-			console.log("mp3name = " + mp3Name);
-			fd.append('fname', mp3Name);
-			fd.append('data', event.target.result);
-			$.ajax({
-				type: 'POST',
-				url: 'upload.php',
-				data: fd,
-				processData: false,
-				contentType: false
-			}).done(function(data) {
-				//console.log(data);
-				log.innerHTML += "\n" + data;
-			});
-		};
-		reader.readAsDataURL(mp3Data);
-		*/
 	}	
-
-	function createDownloadLink() {
-		recorder && recorder.exportWAV(function(blob) {
-			/*
-			var url = URL.createObjectURL(blob);
-			var li = document.createElement('li');
-			var au = document.createElement('audio');
-			var hf = document.createElement('a');
-
-			au.controls = true;
-			au.src = url;
-			hf.href = url;
-			hf.download = new Date().toISOString() + '.wav';
-			hf.innerHTML = hf.download;
-			li.appendChild(au);
-			li.appendChild(hf);
-			recordingslist.appendChild(li);
-			*/
+	
+	
+	if (!Recorder.isRecordingSupported()) {
+	
+		__log('<span style="color:red;font-weight:bold">Recording features are not supported in your browser.</span>');
+	
+	} else {
+	
+		var recorder = new Recorder({
+			monitorGain: parseInt(0, 10),
+			numberOfChannels: parseInt(1, 10),
+			encoderBitRate: parseInt(64000,10),
+			encoderSampleRate: parseInt(48000,10),
+			encoderPath: "encoderWorker.min.js"
 		});
-	}
 
+		pause.addEventListener( "click", function(){ recorder.pause(); });
+		resume.addEventListener( "click", function(){ recorder.resume(); });
+		stopButton.addEventListener( "click", function(){ recorder.stop(); });
+		start.addEventListener( "click", function(){ 
+			recorder.start().catch(function(e){
+				__log('<span style="color:red;font-weight:bold">Error encountered: ' + e.message + '</span>');
+			});
+		});
+
+		recorder.onstart = function(e){
+			__log('Recorder is started');
+			start.disabled = resume.disabled = true;
+			pause.disabled = stopButton.disabled = false;
+			$('#start_label').css('display', 'none');
+			$('#start').css('display', 'none');
+			$('#stop_label').css('display', 'block');
+			$('#stopButton').css('display', 'inline');
+		};
+
+		recorder.onstop = function(e){
+			__log('Recorder is stopped');
+			start.disabled = false;
+			pause.disabled = resume.disabled = stopButton.disabled = true;
+			$('#stop_label').css('display', 'none');
+			$('#stopButton').css('display', 'none');
+			$('#next').css('display', 'block');
+		};
+
+		recorder.onpause = function(e){
+			__log('Recorder is paused');
+			pause.disabled = start.disabled = true;
+			resume.disabled = stopButton.disabled = false;
+		};
+
+		recorder.onresume = function(e){
+			__log('Recorder is resuming');
+			start.disabled = resume.disabled = true;
+			pause.disabled = stopButton.disabled = false;
+		};
+			
+		recorder.ondataavailable = function( typedArray ){
+			var dataBlob = new Blob( [typedArray], { type: 'audio/ogg' } );
+			var fileName = "enregistrement.opus";
+			var url = URL.createObjectURL( dataBlob );
+
+			var audio = document.createElement('audio');
+			audio.controls = true;
+			audio.src = url;
+
+			var link = document.createElement('a');
+			link.href = url;
+			link.download = fileName;
+			link.innerHTML = link.download;
+
+			var li = document.createElement('li');
+			li.appendChild(link);
+			li.appendChild(audio);
+
+			recordingslist.appendChild(li);
+		};
+	}
+	
+	
 	window.onload = function init() {
 		try {
 			// webkit shim
@@ -162,25 +170,24 @@
 
 			audio_context = new AudioContext;
 			__log('Audio context set up.');
-			__log('navigator.getUserMedia ' + (navigator.getUserMedia ? 'available.' : 'not present!'));
+			__log('Navigator User Media ' + (navigator.getUserMedia ? '<span style="color:green;font-weight:bold">available.</span>' : '<span style="color:red;font-weight:bold">not present!</span>'));
 		} catch (e) {
-			alert('No web audio support in this browser!');
+			alert('<span style="color:red;font-weight:bold">No web audio support in this browser!</span>');
 		}
 
 		navigator.getUserMedia({audio: true}, startUserMedia, function(e) {
-		  __log('No live audio input: ' + e);
+			//__log('No live audio input: ' + e);
+			__log('<span style="color:red;font-weight:bold">No live audio input.</span>');
 		});
-	};
-		
+	};	
+	
 	</script>
-
-	<!-- Include the recorder.js library from a local copy -->
-	<script src="recordmp3.js"></script>
 
 	<!-- Optional JavaScript -->
 	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	
 </body>
 </html>

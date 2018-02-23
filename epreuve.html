@@ -11,63 +11,67 @@
 	<!-- Material Icons -->
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	
+	<!-- Customs CSS -->
 	<link rel="stylesheet" type="text/css" href="styles.css">
+	
+	<!-- Recoder -->
+	<script src="recorder.min.js"></script>
 
     <title>Entrainement EAF</title>
 
     </head>
 <body>
 
-<div id="wait" class="text-center"><br /><br /><br /><br /><b>ATTENDEZ!</b><br />La génération du fichier audio peut prendre plusieurs minutes.<br /><b>NE PAS QUITTER CETTE PAGE</b><br /><b>NE PAS RAFRAICHIR CETTE PAGE</b></div>
-
-<div class="container">
-	<div class="row">
-		<div class="col-md-8 offset-md-2">
-		
-			<h1 class="text-center">ENTRAINEMENT EAF</h1>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-8 offset-md-2">
 			
-			<div class="alert alert-dark" role="alert">
-				L'épreuve se déroule en deux étapes pour une durée totale de <b>40 minutes</b> :
-				<ul>
-				<li>Etape 1 : préparation (<b>30 minutes</b>)</li>
-				<li>Etape 2 : lecture et exposé (<b>10 minutes</b>)</li>
-				</ul>
-				Pour démarrer l'enregistrement de la lecture et de l'exposé, cliquez sur le bouton quand il apparait (30 minutes après le début de l'épreuve) et que vous êtes prêt.<br />
-				<br />
-				<b>Démarrez l'épreuve en cliquant sur "sujet"</b>. 
-			</div>
-			
-			<div id="question"></div>
-			
-			<div class="text-center">
-				<div id="etapes" class="font-weight-bold"></div>
-				<div id="timer"><button type="button" class="btn btn-light" onclick="tirage(300)">sujet</button></div>
-			</div>
-			
-			
-			<div id="enregistrement" style="display:none" class="text-center">
-				<div id="start_label" style="width:70%;margin:30px auto 10px auto">
-					Cliquez sur le bouton ci-dessous pour débuter l'enregistrement de la lecture et de l'exposé (10 minutes maximum).<br /><b>Un seul essai possible!</b>
+				<h1 class="text-center">ENTRAINEMENT EAF</h1>
+				
+				<div class="alert alert-dark" role="alert">
+					L'épreuve se déroule en deux étapes pour une durée totale de <b>40 minutes</b> :
+					<ul>
+					<li>Etape 1 : préparation (<b>30 minutes</b>)</li>
+					<li>Etape 2 : lecture et exposé (<b>10 minutes</b>)</li>
+					</ul>
+					Pour démarrer l'enregistrement de la lecture et de l'exposé, cliquez sur le bouton quand il apparait (30 minutes après le début de l'épreuve) et que vous êtes prêt.<br />
+					<br />
+					<b>Démarrez l'épreuve en cliquant sur "sujet"</b>. 
 				</div>
-				<button type="button" class="btn btn-success btn-lg" onclick="startRecording(this);" id="start"><i class="material-icons">keyboard_voice</i></button>
-				<div id="stop_label" style="display:none;width:70%;margin:30px auto 10px auto">
-					Cliquez sur le bouton ci-dessous pour arrêter l'enregistrement.<br /><b>L'arrêt est définitif!</b>
+				
+				<div id="question"></div>
+				
+				<div class="text-center">
+					<div id="etapes" class="font-weight-bold"></div>
+					<div id="timer"><button type="button" class="btn btn-light" onclick="tirage(300)">sujet</button></div>
+				</div>				
+				
+				<div id="enregistrement" style="display:none" class="text-center">
+					<div id="start_label" style="width:70%;margin:30px auto 10px auto">
+						Cliquez sur le bouton ci-dessous pour débuter l'enregistrement de la lecture et de l'exposé (10 minutes maximum).<br /><b>Un seul essai possible!</b>
+					</div>
+					<button type="button" class="btn btn-success btn-lg" id="start"><i class="material-icons">keyboard_voice</i></button>
+					<div id="stop_label" style="display:none;width:70%;margin:30px auto 10px auto">
+						Cliquez sur le bouton ci-dessous pour arrêter l'enregistrement.<br /><b>L'arrêt est définitif!</b>
+					</div>
+					<button type="button" class="btn btn-secondary btn-lg" id="stopButton" style="display:none"><i class="material-icons">stop</i></button>
+
+					<ul id="recordingslist" style="width:380px;margin:40px auto 0px auto"></ul>
+
+					<pre id="log" style="display:none"></pre>
 				</div>
-				<button type="button" class="btn btn-secondary btn-lg" onclick="stopRecording(this);" id="stop" style="display:none"><i class="material-icons">stop</i></button>
-
-				<ul id="recordingslist" style="width:380px;margin:40px auto 0px auto"></ul>
-
-				<pre id="log" style="display:none"></pre>
+				
 			</div>
-			
 		</div>
 	</div>
-</div>
-	
-	
-	
-	<script>
 
+
+	<button id="pause" style="display:none">pause</button>
+	<button id="resume" style="display:none">resume</button>
+
+
+	<script>
+	
 	function addZero(i) {
 		if (i < 10) {
 			i = "0" + i;
@@ -129,133 +133,120 @@
 	  }
 
 	  return array;
-	}	
-  
-
-	function __log(e, data) {
-		log.innerHTML += "\n" + e + " " + (data || '');
+	}		
+	
+	function screenLogger(text, data) {
+		log.innerHTML += "\n" + text + " " + (data || '');
 	}
 
-	var audio_context;
-	var recorder;
-
-	function startUserMedia(stream) {
-		var input = audio_context.createMediaStreamSource(stream);
-		__log('Media stream created.' );
-		__log("input sample rate " +input.context.sampleRate);
-
-		// Feedback!
-		//input.connect(audio_context.destination);
-		__log('Input connected to audio context destination.');
-
-		recorder = new Recorder(input, {
-			numChannels: 1
+	if (!Recorder.isRecordingSupported()) {
+	
+		screenLogger("Recording features are not supported in your browser.");
+	
+	} else {
+	
+		var recorder = new Recorder({
+			monitorGain: parseInt(0, 10),
+			numberOfChannels: parseInt(1, 10),
+			encoderBitRate: parseInt(64000,10),
+			encoderSampleRate: parseInt(48000,10),
+			encoderPath: "encoderWorker.min.js"
 		});
-		__log('Recorder initialised.');
-	}
 
-	function startRecording(button) {
-		recorder && recorder.record();
-		button.disabled = true;
-		button.nextElementSibling.disabled = false;
-		$('#start_label').css('display', 'none');
-		$('#start').css('display', 'none');
-		$('#stop_label').css('display', 'block');
-		$('#stop').css('display', 'inline');
-		tr = new Date();
-		date_rec = tr.getHours() + "h" + addZero(tr.getMinutes());
-		__log('Recording...');
-	}
-
-	function stopRecording(button) {
-		recorder && recorder.stop();
-		button.disabled = true;
-		button.previousElementSibling.disabled = false;
-		$('#stop_label').css('display', 'none');
-		$('#stop').css('display', 'none');
-		ts = new Date();
-		date_stop = ts.getHours() + "h" + addZero(ts.getMinutes());
-		__log('Stopped recording.');
-
-		// create WAV download link using audio data blob
-		createDownloadLink();
-
-		recorder.clear();
-	}
-
-	function uploadAudio(mp3Data){
-		var reader = new FileReader();
-		reader.onload = function(event){
-			var fd = new FormData();
-			var mp3Name = encodeURIComponent(date_deb + '_' + date_rec + '_' + date_stop + '.mp3');
-			console.log("mp3name = " + mp3Name);
-			fd.append('fname', mp3Name);
-			fd.append('data', event.target.result);
-			$.ajax({
-				type: 'POST',
-				url: 'upload.php',
-				data: fd,
-				processData: false,
-				contentType: false
-			}).done(function(data) {
-				//console.log(data);
-				log.innerHTML += "\n" + data;
+		pause.addEventListener( "click", function(){ recorder.pause(); });
+		resume.addEventListener( "click", function(){ recorder.resume(); });
+		stopButton.addEventListener( "click", function(){ recorder.stop(); });
+		start.addEventListener( "click", function(){ 
+			recorder.start().catch(function(e){
+				screenLogger('Error encountered: ' + e.message );
 			});
+		});
+
+		recorder.onstart = function(e){
+			screenLogger('Recorder is started');
+			start.disabled = resume.disabled = true;
+			pause.disabled = stopButton.disabled = false;
+			$('#start_label').css('display', 'none');
+			$('#start').css('display', 'none');
+			$('#stop_label').css('display', 'block');
+			$('#stopButton').css('display', 'inline');
+			tr = new Date();
+			date_rec = tr.getHours() + "h" + addZero(tr.getMinutes());
 		};
-		reader.readAsDataURL(mp3Data);
-	}	
 
-	function createDownloadLink() {
-		recorder && recorder.exportWAV(function(blob) {
-			/*
-			var url = URL.createObjectURL(blob);
-			var li = document.createElement('li');
-			var au = document.createElement('audio');
-			var hf = document.createElement('a');
+		recorder.onstop = function(e){
+			screenLogger('Recorder is stopped');
+			start.disabled = false;
+			pause.disabled = resume.disabled = stopButton.disabled = true;
+			$('#stop_label').css('display', 'none');
+			$('#stopButton').css('display', 'none');
+			ts = new Date();
+			date_stop = ts.getHours() + "h" + addZero(ts.getMinutes());
+		};
 
-			au.controls = true;
-			au.src = url;
-			hf.href = url;
-			hf.download = new Date().toISOString() + '.wav';
-			hf.innerHTML = hf.download;
-			li.appendChild(au);
-			li.appendChild(hf);
-			recordingslist.appendChild(li);
-			*/
-		});
-	}
+		recorder.onpause = function(e){
+			screenLogger('Recorder is paused');
+			pause.disabled = start.disabled = true;
+			resume.disabled = stopButton.disabled = false;
+		};
 
-	window.onload = function init() {
-		try {
-			// webkit shim
-			window.AudioContext = window.AudioContext || window.webkitAudioContext;
-			navigator.getUserMedia = ( navigator.getUserMedia ||
-						   navigator.webkitGetUserMedia ||
-						   navigator.mozGetUserMedia ||
-						   navigator.msGetUserMedia);
-			window.URL = window.URL || window.webkitURL;
-
-			audio_context = new AudioContext;
-			__log('Audio context set up.');
-			__log('navigator.getUserMedia ' + (navigator.getUserMedia ? 'available.' : 'not present!'));
-		} catch (e) {
-			alert('No web audio support in this browser!');
-		}
-
-		navigator.getUserMedia({audio: true}, startUserMedia, function(e) {
-		  __log('No live audio input: ' + e);
-		});
-	};
+		recorder.onresume = function(e){
+			screenLogger('Recorder is resuming');
+			start.disabled = resume.disabled = true;
+			pause.disabled = stopButton.disabled = false;
+		};
 		
+		function uploadAudio(mp3Data){
+			var reader = new FileReader();
+			reader.onload = function(event){
+				var fd = new FormData();
+				var OpusName = encodeURIComponent(date_deb + '_' + date_rec + '_' + date_stop + '.opus');
+				console.log("OpusName = " + OpusName);
+				fd.append('fname', OpusName);
+				fd.append('data', event.target.result);
+				$.ajax({
+					type: 'POST',
+					url: 'upload.php',
+					data: fd,
+					processData: false,
+					contentType: false
+				}).done(function(data) {
+					//console.log(data);
+					log.innerHTML += "\n" + data;
+				});
+			};
+			reader.readAsDataURL(mp3Data);
+		}		
+	
+		recorder.ondataavailable = function( typedArray ){
+			var dataBlob = new Blob( [typedArray], { type: 'audio/ogg' } );
+			uploadAudio(dataBlob);
+			var fileName = "enregistrement.opus";
+			var url = URL.createObjectURL( dataBlob );
+
+			var audio = document.createElement('audio');
+			audio.controls = true;
+			audio.src = url;
+
+			var link = document.createElement('a');
+			link.href = url;
+			link.download = fileName;
+			link.innerHTML = link.download;
+
+			var li = document.createElement('li');
+			li.appendChild(link);
+			li.appendChild(audio);
+
+			recordingslist.appendChild(li);
+		};
+	}
 	</script>
-
-	<!-- Include the recorder.js library from a local copy -->
-	<script src="recordmp3.js"></script>
-
+	
 	<!-- Optional JavaScript -->
 	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	
 </body>
 </html>
